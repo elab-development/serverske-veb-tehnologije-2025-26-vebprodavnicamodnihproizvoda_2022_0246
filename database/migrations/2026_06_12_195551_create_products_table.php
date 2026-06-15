@@ -12,20 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-        $table->id(); // Primarni ključ za proizvod
+        $table->id(); 
         
-        // 2. TIP MIGRACIJE: Spoljni ključ koji povezuje proizvod sa kategorijom
         $table->foreignId('category_id')->constrained()->onDelete('cascade');
         
-        $table->string('name'); // Naziv artikla (npr. "Kožna jakna", "Letnja haljina")
-        $table->text('description')->nullable(); // Detaljan opis proizvoda
+        $table->string('name');
+        $table->text('description')->nullable();
         
-        // 3. TIP MIGRACIJE: Dodatna ograničenja (unsigned i decimal)
-        $table->decimal('price', 8, 2)->unsigned(); // Cena (maksimalno 999999.99)
-        $table->integer('stock')->unsigned()->default(0); // Količina na stanju
-        $table->string('size')->nullable(); // Veličina (S, M, L, XL...)
+        $table->decimal('price', 8, 2)->unsigned(); 
+        $table->integer('stock')->unsigned()->default(0); 
+        $table->string('size')->nullable(); 
         
-        $table->timestamps(); // created_at i updated_at
+        $table->timestamps(); 
         });
     }
 

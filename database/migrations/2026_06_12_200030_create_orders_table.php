@@ -12,16 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('orders', function (Blueprint $table) {
-        $table->id(); // Primarni ključ porudžbine
+        $table->id(); 
         
-        // 4. TIP MIGRACIJE: Spoljni ključ koji povezuje porudžbinu sa korisnikom (User)
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
         
-        $table->decimal('total_price', 10, 2)->unsigned(); // Ukupna cena porudžbine
-        $table->string('status')->default('pending'); // Status (pending, shipped, delivered, cancelled)
-        $table->string('delivery_address'); // Adresa za isporuku odeće/obuće
+        $table->decimal('total_price', 10, 2)->unsigned(); 
+        $table->string('status')->default('pending'); 
+        $table->string('delivery_address'); 
         
-        $table->timestamps(); // created_at i updated_at
+        $table->timestamps(); 
         });
     }
 
