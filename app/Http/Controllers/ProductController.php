@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -84,6 +85,93 @@ class ProductController extends Controller
                 'average_product_price' => round($averagePrice, 2),
                 'out_of_stock_count' => $outOfStock
             ]
+        ], 200);
+    }
+
+    
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'size' => 'required|string|max:10',
+            'image' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $product = Product::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proizvod uspešno kreiran.',
+            'data' => $product
+        ], 201);
+    }
+
+    
+    public function update(Request $request, $id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proizvod nije pronađen.'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'sometimes|required|exists:categories,id',
+            'name' => 'sometimes|required|string|max:255',
+            'brand' => 'sometimes|required|string|max:255',
+            'price' => 'sometimes|required|numeric|min:0',
+            'stock' => 'sometimes|required|integer|min:0',
+            'size' => 'sometimes|required|string|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $product->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proizvod uspešno izmenjen.',
+            'data' => $product
+        ], 200);
+    }
+
+    
+    public function destroy($id)
+    {
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proizvod nije pronađen.'
+            ], 404);
+        }
+
+        $product->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proizvod uspešno obrisan iz baze.'
         ], 200);
     }
 }
