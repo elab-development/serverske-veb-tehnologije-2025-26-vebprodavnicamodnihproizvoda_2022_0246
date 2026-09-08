@@ -15,8 +15,12 @@ Route::apiResource('products', ProductController::class)
     ->only(['index', 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::apiResource('products', ProductController::class)
-        ->only(['store', 'update', 'destroy']);
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('products', ProductController::class)
+            ->only(['store', 'update', 'destroy']);
+    });
+
 });
