@@ -8,10 +8,27 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->get();
+        $query = Product::with('category');
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('brand')) {
+            $query->where('brand', 'LIKE', '%' . $request->brand . '%');
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        $products = $query->paginate(10);
 
         return response()->json([
             'success' => true,
@@ -20,7 +37,6 @@ class ProductController extends Controller
         ], 200);
     }
 
-    
     public function show($id)
     {
         $product = Product::with('category')->find($id);
@@ -38,10 +54,9 @@ class ProductController extends Controller
         ], 200);
     }
 
-   
     public function search(Request $request)
     {
-        $term = $request->query('term'); 
+        $term = $request->query('term');
 
         $products = Product::with('category')
             ->where('name', 'LIKE', "%{$term}%")
@@ -56,7 +71,6 @@ class ProductController extends Controller
         ], 200);
     }
 
-    
     public function filterByCategory($categoryId)
     {
         $products = Product::with('category')
@@ -71,7 +85,6 @@ class ProductController extends Controller
         ], 200);
     }
 
-    
     public function stockStats()
     {
         $totalItems = Product::sum('stock');
@@ -88,7 +101,6 @@ class ProductController extends Controller
         ], 200);
     }
 
-    
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -117,7 +129,6 @@ class ProductController extends Controller
         ], 201);
     }
 
-    
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
@@ -137,7 +148,7 @@ class ProductController extends Controller
             'price' => 'sometimes|required|numeric|min:0',
             'stock' => 'sometimes|required|integer|min:0',
             'image' => 'sometimes|nullable|string',
-            ]);
+        ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -155,7 +166,6 @@ class ProductController extends Controller
         ], 200);
     }
 
-    
     public function destroy($id)
     {
         $product = Product::find($id);
