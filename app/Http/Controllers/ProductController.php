@@ -98,7 +98,6 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'size' => 'required|string|max:10',
             'image' => 'nullable|string'
         ]);
 
@@ -109,7 +108,7 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product = Product::create($request->all());
+        $product = Product::create($validator->validated());
 
         return response()->json([
             'success' => true,
@@ -134,10 +133,11 @@ class ProductController extends Controller
             'category_id' => 'sometimes|required|exists:categories,id',
             'name' => 'sometimes|required|string|max:255',
             'brand' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
             'price' => 'sometimes|required|numeric|min:0',
             'stock' => 'sometimes|required|integer|min:0',
-            'size' => 'sometimes|required|string|max:10',
-        ]);
+            'image' => 'sometimes|nullable|string',
+            ]);
 
         if ($validator->fails()) {
             return response()->json([
@@ -146,7 +146,7 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product->update($request->all());
+        $product->update($validator->validated());
 
         return response()->json([
             'success' => true,
