@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -110,7 +111,7 @@ class ProductController extends Controller
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image' => 'nullable|string'
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
         ]);
 
         if ($validator->fails()) {
@@ -120,7 +121,13 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product = Product::create($validator->validated());
+        $data = $validator->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product = Product::create($data);
 
         return response()->json([
             'success' => true,
@@ -147,7 +154,7 @@ class ProductController extends Controller
             'description' => 'sometimes|required|string',
             'price' => 'sometimes|required|numeric|min:0',
             'stock' => 'sometimes|required|integer|min:0',
-            'image' => 'sometimes|nullable|string',
+            'image' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -157,7 +164,17 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $product->update($validator->validated());
+        $data = $validator->validated();
+
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product->update($data);
 
         return response()->json([
             'success' => true,
@@ -175,6 +192,10 @@ class ProductController extends Controller
                 'success' => false,
                 'message' => 'Proizvod nije pronađen.'
             ], 404);
+        }
+
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
