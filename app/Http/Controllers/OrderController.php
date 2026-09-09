@@ -257,4 +257,44 @@ class OrderController extends Controller
             'data' => $order->items
         ], 200);
     }
+
+    public function ordersReport(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pristup je dozvoljen samo administratoru.'
+            ], 403);
+        }
+
+        $report = DB::table('orders')
+            ->join('users', 'orders.user_id', '=', 'users.id')
+            ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+            ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'orders.id as order_id',
+                'orders.status',
+                'orders.total_price',
+                'orders.delivery_address',
+                'users.id as user_id',
+                'users.name as user_name',
+                'users.email as user_email',
+                'order_items.quantity',
+                'order_items.price as item_price',
+                'products.id as product_id',
+                'products.name as product_name',
+                'products.brand',
+                'categories.id as category_id',
+                'categories.name as category_name'
+            )
+            ->orderBy('orders.id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Izveštaj o porudžbinama uspešno generisan.',
+            'data' => $report
+        ], 200);
+    }
 }

@@ -19,8 +19,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('orders', OrderController::class);
 
+    Route::get('/reports/orders', [OrderController::class, 'ordersReport']);
+
     Route::get('/users/{id}/orders', [OrderController::class, 'userOrders']);
-    
+
     Route::get('/orders/{id}/items', [OrderController::class, 'orderItems']);
 
     Route::post('logout', [AuthController::class, 'logout']);
