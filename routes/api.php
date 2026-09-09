@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CurrencyController;
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
@@ -11,6 +12,8 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('products/search', [ProductController::class, 'search']);
 Route::get('products/category/{categoryId}', [ProductController::class, 'filterByCategory']);
 Route::get('products/stats/stock', [ProductController::class, 'stockStats']);
+
+Route::get('/currency/convert', [CurrencyController::class, 'convert']);
 
 Route::apiResource('products', ProductController::class)
     ->only(['index', 'show']);
