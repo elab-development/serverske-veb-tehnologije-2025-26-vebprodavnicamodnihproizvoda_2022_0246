@@ -14,9 +14,9 @@ Route::get('products/stats/stock', [ProductController::class, 'stockStats']);
 
 Route::apiResource('products', ProductController::class)
     ->only(['index', 'show']);
-
-Route::middleware('auth:sanctum')->group(function () {
     
+Route::middleware('auth:sanctum')->group(function () {
+
     Route::apiResource('orders', OrderController::class);
 
     Route::post('logout', [AuthController::class, 'logout']);
