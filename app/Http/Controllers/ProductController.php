@@ -11,6 +11,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+
         $query = Product::with('category');
 
         if ($request->filled('category_id')) {
@@ -28,6 +29,21 @@ class ProductController extends Controller
         if ($request->filled('max_price')) {
             $query->where('price', '<=', $request->max_price);
         }
+
+        $allowedSortFields = ['name', 'price', 'stock', 'brand'];
+
+$sortBy = $request->query('sort_by', 'id');
+$sortOrder = strtolower($request->query('sort_order', 'asc'));
+
+if (!in_array($sortBy, $allowedSortFields)) {
+    $sortBy = 'id';
+}
+
+if (!in_array($sortOrder, ['asc', 'desc'])) {
+    $sortOrder = 'asc';
+}
+
+$query->orderBy($sortBy, $sortOrder);
 
         $products = $query->paginate(10);
 
