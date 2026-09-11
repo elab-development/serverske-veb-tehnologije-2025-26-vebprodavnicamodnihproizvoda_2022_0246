@@ -24,7 +24,6 @@ class ProductFactory extends Factory
         'image' => $this->faker->numberBetween(1000000000, 9999999999) . '_2_6_0.jpg',
         'price' => $this->faker->randomElement([20, 25, 30, 35, 40]),
         'stock' => $this->faker->numberBetween(10, 100),
-        'size' => $this->faker->randomElement(['S', 'M', 'L', 'XL']),
         'brand' => $this->faker->randomElement(['Zara', 'Mango', 'H&M', 'Nike', 'Puma']),
     ];
 }
