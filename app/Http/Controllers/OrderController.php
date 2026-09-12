@@ -9,9 +9,29 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class OrderController extends Controller
 {
+
+    #[OA\Get(
+    path: "/orders",
+    summary: "Pregled porudžbina",
+    description: "Registrovani korisnik dobija svoje porudžbine, dok administrator dobija sve porudžbine u sistemu.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Porudžbine uspešno učitane"
+        ),
+        new OA\Response(
+            response: 401,
+            description: "Korisnik nije autentifikovan"
+        )
+    ]
+    )]
+
     public function index(Request $request)
     {
         if ($request->user()->role === 'admin') {
@@ -28,6 +48,28 @@ class OrderController extends Controller
             'data' => OrderResource::collection($orders)
         ], 200);
     }
+
+#[OA\Get(
+    path: "/orders/{id}",
+    summary: "Pregled jedne porudžbine",
+    description: "Vraća određenu porudžbinu. Korisnik može pregledati samo svoju porudžbinu, dok administrator može pregledati bilo koju.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID porudžbine",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    responses: [
+        new OA\Response(response: 200, description: "Porudžbina uspešno učitana"),
+        new OA\Response(response: 403, description: "Korisnik nema dozvolu za pristup porudžbini"),
+        new OA\Response(response: 404, description: "Porudžbina nije pronađena")
+    ]
+)]
 
     public function show(Request $request, $id)
     {
@@ -55,6 +97,64 @@ class OrderController extends Controller
             'data' => new OrderResource($order)
         ], 200);
     }
+
+#[OA\Post(
+    path: "/orders",
+    summary: "Kreiranje porudžbine",
+    description: "Kreira novu porudžbinu sa jednom ili više stavki, proverava stanje proizvoda, umanjuje zalihe i izračunava ukupnu cenu u okviru transakcije.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ["delivery_address", "items"],
+            properties: [
+                new OA\Property(
+                    property: "delivery_address",
+                    type: "string",
+                    example: "Bulevar oslobođenja 10, Beograd"
+                ),
+                new OA\Property(
+                    property: "items",
+                    type: "array",
+                    items: new OA\Items(
+                        required: ["product_id", "quantity"],
+                        properties: [
+                            new OA\Property(
+                                property: "product_id",
+                                type: "integer",
+                                example: 1
+                            ),
+                            new OA\Property(
+                                property: "quantity",
+                                type: "integer",
+                                example: 2
+                            )
+                        ]
+                    )
+                )
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 201,
+            description: "Porudžbina uspešno kreirana"
+        ),
+        new OA\Response(
+            response: 400,
+            description: "Greška tokom kreiranja porudžbine ili nedovoljno proizvoda na stanju"
+        ),
+        new OA\Response(
+            response: 401,
+            description: "Korisnik nije autentifikovan"
+        ),
+        new OA\Response(
+            response: 422,
+            description: "Greška validacije"
+        )
+    ]
+)]
 
     public function store(Request $request)
     {
@@ -137,6 +237,52 @@ class OrderController extends Controller
         }
     }
 
+#[OA\Put(
+    path: "/orders/{id}",
+    summary: "Izmena porudžbine",
+    description: "Menja podatke postojeće porudžbine. Korisnik može menjati samo svoju porudžbinu, dok administrator može menjati bilo koju.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID porudžbine",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    requestBody: new OA\RequestBody(
+        required: false,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(
+                    property: "total_price",
+                    type: "number",
+                    format: "float",
+                    example: 120.50
+                ),
+                new OA\Property(
+                    property: "status",
+                    type: "string",
+                    example: "completed"
+                ),
+                new OA\Property(
+                    property: "delivery_address",
+                    type: "string",
+                    example: "Nova adresa 15, Beograd"
+                )
+            ]
+        )
+    ),
+    responses: [
+        new OA\Response(response: 200, description: "Porudžbina uspešno izmenjena"),
+        new OA\Response(response: 403, description: "Korisnik nema dozvolu za izmenu"),
+        new OA\Response(response: 404, description: "Porudžbina nije pronađena"),
+        new OA\Response(response: 422, description: "Greška validacije")
+    ]
+)]
+
     public function update(Request $request, $id)
     {
         $order = Order::find($id);
@@ -181,6 +327,28 @@ class OrderController extends Controller
         ], 200);
     }
 
+#[OA\Delete(
+    path: "/orders/{id}",
+    summary: "Brisanje porudžbine",
+    description: "Briše porudžbinu ako je korisnik njen vlasnik ili administrator.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID porudžbine",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    responses: [
+        new OA\Response(response: 200, description: "Porudžbina uspešno obrisana"),
+        new OA\Response(response: 403, description: "Korisnik nema dozvolu za brisanje"),
+        new OA\Response(response: 404, description: "Porudžbina nije pronađena")
+    ]
+)]
+
     public function destroy(Request $request, $id)
     {
         $order = Order::find($id);
@@ -210,6 +378,27 @@ class OrderController extends Controller
         ], 200);
     }
 
+#[OA\Get(
+    path: "/users/{id}/orders",
+    summary: "Pregled porudžbina korisnika",
+    description: "Vraća sve porudžbine određenog korisnika. Korisnik može pregledati samo svoje porudžbine, dok administrator može pregledati porudžbine bilo kog korisnika.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID korisnika",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    responses: [
+        new OA\Response(response: 200, description: "Porudžbine korisnika uspešno učitane"),
+        new OA\Response(response: 403, description: "Korisnik nema dozvolu za pregled")
+    ]
+)]
+
     public function userOrders(Request $request, $id)
     {
         if ($request->user()->role !== 'admin' && $request->user()->id != $id) {
@@ -229,6 +418,28 @@ class OrderController extends Controller
             'data' => OrderResource::collection($orders)
         ], 200);
     }
+
+#[OA\Get(
+    path: "/orders/{id}/items",
+    summary: "Pregled stavki porudžbine",
+    description: "Vraća stavke izabrane porudžbine zajedno sa podacima o proizvodima.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            description: "ID porudžbine",
+            schema: new OA\Schema(type: "integer")
+        )
+    ],
+    responses: [
+        new OA\Response(response: 200, description: "Stavke porudžbine uspešno učitane"),
+        new OA\Response(response: 403, description: "Korisnik nema dozvolu za pregled stavki"),
+        new OA\Response(response: 404, description: "Porudžbina nije pronađena")
+    ]
+)]
 
     public function orderItems(Request $request, $id)
     {
@@ -257,6 +468,24 @@ class OrderController extends Controller
             'data' => $order->items
         ], 200);
     }
+
+#[OA\Get(
+    path: "/reports/orders",
+    summary: "Izveštaj o porudžbinama",
+    description: "Administrator dobija detaljan izveštaj o porudžbinama formiran povezivanjem tabela orders, users, order_items, products i categories.",
+    tags: ["Porudžbine"],
+    security: [["sanctum" => []]],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Izveštaj o porudžbinama uspešno generisan"
+        ),
+        new OA\Response(
+            response: 403,
+            description: "Pristup je dozvoljen samo administratoru"
+        )
+    ]
+)]
 
     public function ordersReport(Request $request)
     {

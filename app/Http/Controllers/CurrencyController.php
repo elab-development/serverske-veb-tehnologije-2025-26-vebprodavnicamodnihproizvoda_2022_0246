@@ -4,9 +4,49 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use OpenApi\Attributes as OA;
 
 class CurrencyController extends Controller
 {
+    #[OA\Get(
+    path: "/currency/convert",
+    summary: "Konverzija valuta",
+    description: "Konvertuje zadati iznos iz jedne valute u drugu korišćenjem javnog Frankfurter REST servisa.",
+    tags: ["Spoljašnji servisi"],
+    parameters: [
+        new OA\Parameter(
+            name: "amount",
+            in: "query",
+            required: true,
+            description: "Iznos za konverziju",
+            schema: new OA\Schema(type: "number", format: "float"),
+            example: 100
+        ),
+        new OA\Parameter(
+            name: "from",
+            in: "query",
+            required: true,
+            description: "Početna valuta, troslovni kod",
+            schema: new OA\Schema(type: "string"),
+            example: "EUR"
+        ),
+        new OA\Parameter(
+            name: "to",
+            in: "query",
+            required: true,
+            description: "Ciljna valuta, troslovni kod",
+            schema: new OA\Schema(type: "string"),
+            example: "USD"
+        )
+    ],
+    responses: [
+        new OA\Response(response: 200, description: "Konverzija valuta uspešno izvršena"),
+        new OA\Response(response: 422, description: "Greška validacije"),
+        new OA\Response(response: 502, description: "Nije moguće preuzeti kurs valuta"),
+        new OA\Response(response: 500, description: "Greška u komunikaciji sa javnim servisom")
+    ]
+)]
+
     public function convert(Request $request)
     {
         $validated = $request->validate([

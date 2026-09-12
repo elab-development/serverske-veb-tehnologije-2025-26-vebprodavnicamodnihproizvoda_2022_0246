@@ -6,9 +6,73 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
+    #[OA\Get(
+    path: "/products",
+    summary: "Pregled proizvoda",
+    description: "Vraća paginiranu listu proizvoda sa kategorijama. Podržava filtriranje po kategoriji, brendu i rasponu cena, kao i sortiranje.",
+    tags: ["Proizvodi"],
+    parameters: [
+        new OA\Parameter(
+            name: "category_id",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(type: "integer"),
+            description: "ID kategorije"
+        ),
+        new OA\Parameter(
+            name: "brand",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(type: "string"),
+            description: "Naziv brenda"
+        ),
+        new OA\Parameter(
+            name: "min_price",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(type: "number", format: "float"),
+            description: "Minimalna cena"
+        ),
+        new OA\Parameter(
+            name: "max_price",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(type: "number", format: "float"),
+            description: "Maksimalna cena"
+        ),
+        new OA\Parameter(
+            name: "sort_by",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(
+                type: "string",
+                enum: ["name", "price", "stock", "brand"]
+            ),
+            description: "Polje po kojem se sortira"
+        ),
+        new OA\Parameter(
+            name: "sort_order",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(
+                type: "string",
+                enum: ["asc", "desc"]
+            ),
+            description: "Smer sortiranja"
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Proizvodi uspešno učitani"
+        )
+    ]
+)]
+
     public function index(Request $request)
     {
 
@@ -54,6 +118,32 @@ $query->orderBy($sortBy, $sortOrder);
         ], 200);
     }
 
+#[OA\Get(
+    path: "/products/{id}",
+    summary: "Pregled jednog proizvoda",
+    description: "Vraća podatke o proizvodu sa pripadajućom kategorijom.",
+    tags: ["Proizvodi"],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            schema: new OA\Schema(type: "integer"),
+            description: "ID proizvoda"
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Proizvod uspešno pronađen"
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Proizvod nije pronađen"
+        )
+    ]
+)]
+
     public function show($id)
     {
         $product = Product::with('category')->find($id);
@@ -70,6 +160,28 @@ $query->orderBy($sortBy, $sortOrder);
             'data' => $product
         ], 200);
     }
+
+#[OA\Get(
+    path: "/products/search",
+    summary: "Pretraga proizvoda",
+    description: "Pretražuje proizvode prema nazivu ili brendu.",
+    tags: ["Proizvodi"],
+    parameters: [
+        new OA\Parameter(
+            name: "term",
+            in: "query",
+            required: false,
+            schema: new OA\Schema(type: "string"),
+            description: "Termin za pretragu"
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Rezultati pretrage"
+        )
+    ]
+)]
 
     public function search(Request $request)
     {
@@ -88,6 +200,28 @@ $query->orderBy($sortBy, $sortOrder);
         ], 200);
     }
 
+#[OA\Get(
+    path: "/products/category/{categoryId}",
+    summary: "Filtriranje proizvoda po kategoriji",
+    description: "Vraća proizvode koji pripadaju izabranoj kategoriji.",
+    tags: ["Proizvodi"],
+    parameters: [
+        new OA\Parameter(
+            name: "categoryId",
+            in: "path",
+            required: true,
+            schema: new OA\Schema(type: "integer"),
+            description: "ID kategorije"
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Proizvodi uspešno filtrirani po kategoriji"
+        )
+    ]
+)]
+
     public function filterByCategory($categoryId)
     {
         $products = Product::with('category')
@@ -101,6 +235,19 @@ $query->orderBy($sortBy, $sortOrder);
             'data' => $products
         ], 200);
     }
+
+#[OA\Get(
+    path: "/products/stats/stock",
+    summary: "Statistika zaliha proizvoda",
+    description: "Vraća ukupan broj proizvoda na stanju, prosečnu cenu i broj proizvoda bez zaliha.",
+    tags: ["Proizvodi"],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Statistika uspešno učitana"
+        )
+    ]
+)]
 
     public function stockStats()
     {
@@ -117,6 +264,61 @@ $query->orderBy($sortBy, $sortOrder);
             ]
         ], 200);
     }
+
+#[OA\Post(
+    path: "/products",
+    summary: "Dodavanje proizvoda",
+    description: "Administrator kreira novi proizvod. Moguće je dodati i sliku proizvoda.",
+    tags: ["Proizvodi"],
+    security: [["sanctum" => []]],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\MediaType(
+            mediaType: "multipart/form-data",
+            schema: new OA\Schema(
+                required: [
+                    "category_id",
+                    "name",
+                    "brand",
+                    "description",
+                    "price",
+                    "stock"
+                ],
+                properties: [
+                    new OA\Property(property: "category_id", type: "integer", example: 1),
+                    new OA\Property(property: "name", type: "string", example: "Nike majica"),
+                    new OA\Property(property: "brand", type: "string", example: "Nike"),
+                    new OA\Property(property: "description", type: "string", example: "Sportska majica"),
+                    new OA\Property(property: "price", type: "number", format: "float", example: 49.99),
+                    new OA\Property(property: "stock", type: "integer", example: 20),
+                    new OA\Property(
+                        property: "image",
+                        type: "string",
+                        format: "binary"
+                    )
+                ]
+            )
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 201,
+            description: "Proizvod uspešno kreiran"
+        ),
+        new OA\Response(
+            response: 401,
+            description: "Korisnik nije autentifikovan"
+        ),
+        new OA\Response(
+            response: 403,
+            description: "Pristup je dozvoljen samo administratoru"
+        ),
+        new OA\Response(
+            response: 422,
+            description: "Greška validacije"
+        )
+    ]
+)]
 
     public function store(Request $request)
     {
@@ -151,6 +353,62 @@ $query->orderBy($sortBy, $sortOrder);
             'data' => $product
         ], 201);
     }
+
+#[OA\Put(
+    path: "/products/{id}",
+    summary: "Izmena proizvoda",
+    description: "Administrator menja podatke postojećeg proizvoda.",
+    tags: ["Proizvodi"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            schema: new OA\Schema(type: "integer"),
+            description: "ID proizvoda"
+        )
+    ],
+    requestBody: new OA\RequestBody(
+        required: false,
+        content: new OA\MediaType(
+            mediaType: "multipart/form-data",
+            schema: new OA\Schema(
+                properties: [
+                    new OA\Property(property: "category_id", type: "integer"),
+                    new OA\Property(property: "name", type: "string"),
+                    new OA\Property(property: "brand", type: "string"),
+                    new OA\Property(property: "description", type: "string"),
+                    new OA\Property(property: "price", type: "number", format: "float"),
+                    new OA\Property(property: "stock", type: "integer"),
+                    new OA\Property(
+                        property: "image",
+                        type: "string",
+                        format: "binary"
+                    )
+                ]
+            )
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Proizvod uspešno izmenjen"
+        ),
+        new OA\Response(
+            response: 403,
+            description: "Pristup je dozvoljen samo administratoru"
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Proizvod nije pronađen"
+        ),
+        new OA\Response(
+            response: 422,
+            description: "Greška validacije"
+        )
+    ]
+)]
 
     public function update(Request $request, $id)
     {
@@ -198,6 +456,37 @@ $query->orderBy($sortBy, $sortOrder);
             'data' => $product
         ], 200);
     }
+
+#[OA\Delete(
+    path: "/products/{id}",
+    summary: "Brisanje proizvoda",
+    description: "Administrator briše proizvod iz baze. Ako proizvod ima sliku, briše se i fajl slike.",
+    tags: ["Proizvodi"],
+    security: [["sanctum" => []]],
+    parameters: [
+        new OA\Parameter(
+            name: "id",
+            in: "path",
+            required: true,
+            schema: new OA\Schema(type: "integer"),
+            description: "ID proizvoda"
+        )
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: "Proizvod uspešno obrisan"
+        ),
+        new OA\Response(
+            response: 403,
+            description: "Pristup je dozvoljen samo administratoru"
+        ),
+        new OA\Response(
+            response: 404,
+            description: "Proizvod nije pronađen"
+        )
+    ]
+)]
 
     public function destroy($id)
     {
