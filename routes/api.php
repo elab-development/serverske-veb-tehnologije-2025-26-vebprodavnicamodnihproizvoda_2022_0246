@@ -17,7 +17,7 @@ Route::get('products/stats/stock', [ProductController::class, 'stockStats']);
 Route::apiResource('products', ProductController::class)
     ->only(['index', 'show']);
 
-Route::get('/currency/convert', [CurrencyController::class, 'convert']);
+Route::get('/products/{id}/price-convert', [CurrencyController::class, 'convert']);
 Route::get('/external-fashion', [FashionApiController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {

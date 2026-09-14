@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use OpenApi\Attributes as OA;
@@ -9,54 +10,53 @@ use OpenApi\Attributes as OA;
 class CurrencyController extends Controller
 {
     #[OA\Get(
-    path: "/currency/convert",
-    summary: "Konverzija valuta",
-    description: "Konvertuje zadati iznos iz jedne valute u drugu korišćenjem javnog Frankfurter REST servisa.",
-    tags: ["Spoljašnji servisi"],
-    parameters: [
-        new OA\Parameter(
-            name: "amount",
-            in: "query",
-            required: true,
-            description: "Iznos za konverziju",
-            schema: new OA\Schema(type: "number", format: "float"),
-            example: 100
-        ),
-        new OA\Parameter(
-            name: "from",
-            in: "query",
-            required: true,
-            description: "Početna valuta, troslovni kod",
-            schema: new OA\Schema(type: "string"),
-            example: "EUR"
-        ),
-        new OA\Parameter(
-            name: "to",
-            in: "query",
-            required: true,
-            description: "Ciljna valuta, troslovni kod",
-            schema: new OA\Schema(type: "string"),
-            example: "USD"
-        )
-    ],
-    responses: [
-        new OA\Response(response: 200, description: "Konverzija valuta uspešno izvršena"),
-        new OA\Response(response: 422, description: "Greška validacije"),
-        new OA\Response(response: 502, description: "Nije moguće preuzeti kurs valuta"),
-        new OA\Response(response: 500, description: "Greška u komunikaciji sa javnim servisom")
-    ]
-)]
+        path: "/products/{id}/price-convert",
+        summary: "Konverzija cene proizvoda",
+        description: "Preuzima cenu proizvoda iz baze i konvertuje je iz EUR u izabranu valutu korišćenjem javnog Frankfurter REST servisa.",
+        tags: ["Spoljašnji servisi"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID proizvoda",
+                schema: new OA\Schema(type: "integer"),
+                example: 1
+            ),
+            new OA\Parameter(
+                name: "to",
+                in: "query",
+                required: true,
+                description: "Ciljna valuta, troslovni kod",
+                schema: new OA\Schema(type: "string"),
+                example: "USD"
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Cena proizvoda uspešno konvertovana"),
+            new OA\Response(response: 404, description: "Proizvod nije pronađen"),
+            new OA\Response(response: 422, description: "Greška validacije"),
+            new OA\Response(response: 502, description: "Nije moguće preuzeti kurs valuta"),
+            new OA\Response(response: 500, description: "Greška u komunikaciji sa javnim servisom")
+        ]
+    )]
 
-    public function convert(Request $request)
+    public function convert(Request $request, $id)
     {
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'from' => 'required|string|size:3',
             'to' => 'required|string|size:3',
         ]);
 
-        $amount = $validated['amount'];
-        $from = strtoupper($validated['from']);
+        $product = Product::find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proizvod nije pronađen.'
+            ], 404);
+        }
+
+        $from = 'EUR';
         $to = strtoupper($validated['to']);
 
         try {
@@ -75,17 +75,19 @@ class CurrencyController extends Controller
 
             $rate = $data['rate'];
 
-            $convertedAmount = round($amount * $rate, 2);
+            $convertedPrice = round($product->price * $rate, 2);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Konverzija valuta uspešno izvršena.',
+                'message' => 'Cena proizvoda uspešno konvertovana.',
                 'data' => [
-                    'amount' => $amount,
-                    'from' => $from,
-                    'to' => $to,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'original_price' => $product->price,
+                    'original_currency' => $from,
+                    'converted_price' => $convertedPrice,
+                    'currency' => $to,
                     'rate' => $rate,
-                    'converted_amount' => $convertedAmount,
                     'rate_date' => $data['date'] ?? null
                 ]
             ], 200);
