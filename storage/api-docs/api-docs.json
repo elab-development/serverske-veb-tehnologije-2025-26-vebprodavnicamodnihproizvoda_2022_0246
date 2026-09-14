@@ -1,0 +1,923 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Web prodavnica modnih proizvoda API",
+        "description": "REST API dokumentacija za aplikaciju Web prodavnica modnih proizvoda.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/api",
+            "description": "Lokalni razvojni server"
+        }
+    ],
+    "paths": {
+        "/register": {
+            "post": {
+                "tags": [
+                    "Autentifikacija"
+                ],
+                "summary": "Registracija korisnika",
+                "description": "Registruje novog korisnika, čuva njegove podatke u bazi i generiše Laravel Sanctum pristupni token.",
+                "operationId": "0903f2e0df1a8857bee538fc055417f0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Saska Savic"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "saska@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Korisnik uspešno registrovan"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Autentifikacija"
+                ],
+                "summary": "Prijava korisnika",
+                "description": "Proverava email i lozinku korisnika i nakon uspešne prijave generiše novi Laravel Sanctum pristupni token.",
+                "operationId": "2dd578ff7aba2721293dac66833b27d1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "saska@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Uspešna prijava"
+                    },
+                    "401": {
+                        "description": "Pogrešni kredencijali"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Autentifikacija"
+                ],
+                "summary": "Odjava korisnika",
+                "description": "Odjavljuje autentifikovanog korisnika brisanjem trenutnog Laravel Sanctum pristupnog tokena.",
+                "operationId": "68a6108af04af5e3bc1ea68a6c6f1299",
+                "responses": {
+                    "200": {
+                        "description": "Uspešna odjava"
+                    },
+                    "401": {
+                        "description": "Korisnik nije autentifikovan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/currency/convert": {
+            "get": {
+                "tags": [
+                    "Spoljašnji servisi"
+                ],
+                "summary": "Konverzija valuta",
+                "description": "Konvertuje zadati iznos iz jedne valute u drugu korišćenjem javnog Frankfurter REST servisa.",
+                "operationId": "bf451498b853d9a8f2ca01b42d8b7a69",
+                "parameters": [
+                    {
+                        "name": "amount",
+                        "in": "query",
+                        "description": "Iznos za konverziju",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        },
+                        "example": 100
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "description": "Početna valuta, troslovni kod",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "EUR"
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "description": "Ciljna valuta, troslovni kod",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "USD"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Konverzija valuta uspešno izvršena"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    },
+                    "502": {
+                        "description": "Nije moguće preuzeti kurs valuta"
+                    },
+                    "500": {
+                        "description": "Greška u komunikaciji sa javnim servisom"
+                    }
+                }
+            }
+        },
+        "/external-fashion": {
+            "get": {
+                "tags": [
+                    "Spoljašnji servisi"
+                ],
+                "summary": "Preuzimanje eksternih modnih podataka",
+                "description": "Preuzima podatke o ženskoj modi sa javnog eksternog REST servisa.",
+                "operationId": "1ab70b3d8862499539cedc8daef9cb2e",
+                "responses": {
+                    "200": {
+                        "description": "Eksterni modni proizvodi uspešno učitani"
+                    },
+                    "502": {
+                        "description": "Nije moguće preuzeti podatke sa eksternog servisa"
+                    },
+                    "500": {
+                        "description": "Greška u komunikaciji sa javnim servisom"
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "get": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Pregled porudžbina",
+                "description": "Registrovani korisnik dobija svoje porudžbine, dok administrator dobija sve porudžbine u sistemu.",
+                "operationId": "325fd3d55bbe9bb39645269928fa4983",
+                "responses": {
+                    "200": {
+                        "description": "Porudžbine uspešno učitane"
+                    },
+                    "401": {
+                        "description": "Korisnik nije autentifikovan"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Kreiranje porudžbine",
+                "description": "Kreira novu porudžbinu sa jednom ili više stavki, proverava stanje proizvoda, umanjuje zalihe i izračunava ukupnu cenu u okviru transakcije.",
+                "operationId": "445bab4f7dc9ea6fcd54f286c0209478",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "delivery_address",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "delivery_address": {
+                                        "type": "string",
+                                        "example": "Bulevar oslobođenja 10, Beograd"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Porudžbina uspešno kreirana"
+                    },
+                    "400": {
+                        "description": "Greška tokom kreiranja porudžbine ili nedovoljno proizvoda na stanju"
+                    },
+                    "401": {
+                        "description": "Korisnik nije autentifikovan"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Pregled jedne porudžbine",
+                "description": "Vraća određenu porudžbinu. Korisnik može pregledati samo svoju porudžbinu, dok administrator može pregledati bilo koju.",
+                "operationId": "f088d34a2737782215f435f854e31de5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID porudžbine",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Porudžbina uspešno učitana"
+                    },
+                    "403": {
+                        "description": "Korisnik nema dozvolu za pristup porudžbini"
+                    },
+                    "404": {
+                        "description": "Porudžbina nije pronađena"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Izmena porudžbine",
+                "description": "Menja podatke postojeće porudžbine. Korisnik može menjati samo svoju porudžbinu, dok administrator može menjati bilo koju.",
+                "operationId": "54c2858108887d7a1252bcc4325158c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID porudžbine",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "total_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 120.5
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "completed"
+                                    },
+                                    "delivery_address": {
+                                        "type": "string",
+                                        "example": "Nova adresa 15, Beograd"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Porudžbina uspešno izmenjena"
+                    },
+                    "403": {
+                        "description": "Korisnik nema dozvolu za izmenu"
+                    },
+                    "404": {
+                        "description": "Porudžbina nije pronađena"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Brisanje porudžbine",
+                "description": "Briše porudžbinu ako je korisnik njen vlasnik ili administrator.",
+                "operationId": "deb80b1c70721ac0812c9574580984c1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID porudžbine",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Porudžbina uspešno obrisana"
+                    },
+                    "403": {
+                        "description": "Korisnik nema dozvolu za brisanje"
+                    },
+                    "404": {
+                        "description": "Porudžbina nije pronađena"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/users/{id}/orders": {
+            "get": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Pregled porudžbina korisnika",
+                "description": "Vraća sve porudžbine određenog korisnika. Korisnik može pregledati samo svoje porudžbine, dok administrator može pregledati porudžbine bilo kog korisnika.",
+                "operationId": "7eb64787397e0be0c07b5c5465534200",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID korisnika",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Porudžbine korisnika uspešno učitane"
+                    },
+                    "403": {
+                        "description": "Korisnik nema dozvolu za pregled"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/orders/{id}/items": {
+            "get": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Pregled stavki porudžbine",
+                "description": "Vraća stavke izabrane porudžbine zajedno sa podacima o proizvodima.",
+                "operationId": "f4570214e82c0cf4ea8801367c3cd611",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID porudžbine",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stavke porudžbine uspešno učitane"
+                    },
+                    "403": {
+                        "description": "Korisnik nema dozvolu za pregled stavki"
+                    },
+                    "404": {
+                        "description": "Porudžbina nije pronađena"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/reports/orders": {
+            "get": {
+                "tags": [
+                    "Porudžbine"
+                ],
+                "summary": "Izveštaj o porudžbinama",
+                "description": "Administrator dobija detaljan izveštaj o porudžbinama formiran povezivanjem tabela orders, users, order_items, products i categories.",
+                "operationId": "737499e215b7666c96c815b0ba3463ee",
+                "responses": {
+                    "200": {
+                        "description": "Izveštaj o porudžbinama uspešno generisan"
+                    },
+                    "403": {
+                        "description": "Pristup je dozvoljen samo administratoru"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products": {
+            "get": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Pregled proizvoda",
+                "description": "Vraća paginiranu listu proizvoda sa kategorijama. Podržava filtriranje po kategoriji, brendu i rasponu cena, kao i sortiranje.",
+                "operationId": "c1ff6f862214e1896c59cfe0491ce0e8",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "ID kategorije",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "brand",
+                        "in": "query",
+                        "description": "Naziv brenda",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Minimalna cena",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Maksimalna cena",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Polje po kojem se sortira",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name",
+                                "price",
+                                "stock",
+                                "brand"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Smer sortiranja",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proizvodi uspešno učitani"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Dodavanje proizvoda",
+                "description": "Administrator kreira novi proizvod. Moguće je dodati i sliku proizvoda.",
+                "operationId": "399770d33fa4672f1216707d0e236763",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "name",
+                                    "brand",
+                                    "description",
+                                    "price",
+                                    "stock"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Nike majica"
+                                    },
+                                    "brand": {
+                                        "type": "string",
+                                        "example": "Nike"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sportska majica"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 49.99
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Proizvod uspešno kreiran"
+                    },
+                    "401": {
+                        "description": "Korisnik nije autentifikovan"
+                    },
+                    "403": {
+                        "description": "Pristup je dozvoljen samo administratoru"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Pregled jednog proizvoda",
+                "description": "Vraća podatke o proizvodu sa pripadajućom kategorijom.",
+                "operationId": "b46f4aa73232d0368eee698a082342a4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID proizvoda",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proizvod uspešno pronađen"
+                    },
+                    "404": {
+                        "description": "Proizvod nije pronađen"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Izmena proizvoda",
+                "description": "Administrator menja podatke postojećeg proizvoda.",
+                "operationId": "1419d479f9340e30e67fe21a2ca525b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID proizvoda",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "brand": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "stock": {
+                                        "type": "integer"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Proizvod uspešno izmenjen"
+                    },
+                    "403": {
+                        "description": "Pristup je dozvoljen samo administratoru"
+                    },
+                    "404": {
+                        "description": "Proizvod nije pronađen"
+                    },
+                    "422": {
+                        "description": "Greška validacije"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Brisanje proizvoda",
+                "description": "Administrator briše proizvod iz baze. Ako proizvod ima sliku, briše se i fajl slike.",
+                "operationId": "fe34b364a3f192305598b65d04d06b5d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID proizvoda",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proizvod uspešno obrisan"
+                    },
+                    "403": {
+                        "description": "Pristup je dozvoljen samo administratoru"
+                    },
+                    "404": {
+                        "description": "Proizvod nije pronađen"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/products/search": {
+            "get": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Pretraga proizvoda",
+                "description": "Pretražuje proizvode prema nazivu ili brendu.",
+                "operationId": "cb3d19d3bdb960a76a8948819ab5fe55",
+                "parameters": [
+                    {
+                        "name": "term",
+                        "in": "query",
+                        "description": "Termin za pretragu",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rezultati pretrage"
+                    }
+                }
+            }
+        },
+        "/products/category/{categoryId}": {
+            "get": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Filtriranje proizvoda po kategoriji",
+                "description": "Vraća proizvode koji pripadaju izabranoj kategoriji.",
+                "operationId": "19a7d09eaae03683eab98b45bdb8b137",
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "path",
+                        "description": "ID kategorije",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Proizvodi uspešno filtrirani po kategoriji"
+                    }
+                }
+            }
+        },
+        "/products/stats/stock": {
+            "get": {
+                "tags": [
+                    "Proizvodi"
+                ],
+                "summary": "Statistika zaliha proizvoda",
+                "description": "Vraća ukupan broj proizvoda na stanju, prosečnu cenu i broj proizvoda bez zaliha.",
+                "operationId": "0f50fca8f30fa05fec773f8420d82f8c",
+                "responses": {
+                    "200": {
+                        "description": "Statistika uspešno učitana"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "description": "Uneti Laravel Sanctum pristupni token.",
+                "bearerFormat": "Token",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Autentifikacija",
+            "description": "Autentifikacija"
+        },
+        {
+            "name": "Spoljašnji servisi",
+            "description": "Spoljašnji servisi"
+        },
+        {
+            "name": "Porudžbine",
+            "description": "Porudžbine"
+        },
+        {
+            "name": "Proizvodi",
+            "description": "Proizvodi"
+        }
+    ]
+}
